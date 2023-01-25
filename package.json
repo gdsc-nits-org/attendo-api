@@ -1,0 +1,48 @@
+{
+  "name": "attendo-api",
+  "config": {
+    "entry": "handler.js",
+    "offline": "app.local.js",
+    "outfile": "dist/main.js"
+  },
+  "scripts": {
+    "start": "pnpm dev",
+    "dev": "pnpm bundle && sls offline",
+    "aws:deploy": "pnpm bundle && sls deploy",
+    "bundle": "esbuild $npm_package_config_entry --bundle --platform=node --target=node18 --outfile=$npm_package_config_outfile --minify",
+    "mongodb": "sudo docker run -p 27017:27017 mongo:latest",
+    "pre-commit": "lint-staged",
+    "lint": "eslint . --ext .js --fix",
+    "pretty": "pnpm prettier --write .",
+    "prepare": "npx simple-git-hooks"
+  },
+  "dependencies": {
+    "@vendia/serverless-express": "^4.10.1",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "firebase-admin": "^11.5.0",
+    "helmet": "^6.0.1",
+    "mongoose": "^6.8.4",
+    "morgan": "^1.10.0",
+    "serverless-http": "^3.1.1"
+  },
+  "devDependencies": {
+    "dotenv": "^16.0.3",
+    "esbuild": "^0.17.4",
+    "eslint": "^8.32.0",
+    "lint-staged": "^13.1.0",
+    "prettier": "^2.8.3",
+    "serverless": "^3.26.0",
+    "serverless-offline": "^12.0.4",
+    "simple-git-hooks": "^2.8.1"
+  },
+  "lint-staged": {
+    "*.js": [
+      "pnpm lint",
+      "pnpm pretty"
+    ]
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm pre-commit"
+  }
+}

@@ -1,0 +1,20 @@
+service: attendo-api
+frameworkVersion: '3'
+
+plugins:
+  - serverless-offline
+
+package:
+  patterns:
+    - "!./**"
+    - "dist/**"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+
+functions:
+  api:
+    handler: handler.handler
+    events:
+      - httpApi: '*'
