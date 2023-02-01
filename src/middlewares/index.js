@@ -1,3 +1,4 @@
 const Error = require("./error");
+const Checker = require("./idChecker");
 
-module.exports = { Error };
+module.exports = { Error, Checker };

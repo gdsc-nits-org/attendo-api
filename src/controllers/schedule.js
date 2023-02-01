@@ -3,8 +3,9 @@ const Utils = require("../utils");
 
 async function getSchedule(req, res, next) {
   const { classId, day } = req.params;
-  if (!Utils.Mongoose.objectIdChecker(classId)) {
-    return next(Utils.Response.error("Invalid Class ID", 400));
+
+  if (!day || typeof day !== "string") {
+    return next(Utils.Response.error("Type Error", 400));
   }
 
   const schedule = await Models.Schedule.findOne({
@@ -13,8 +14,20 @@ async function getSchedule(req, res, next) {
   return res.json(Utils.Response.success(schedule.classes[day]));
 }
 
-async function createSchedule(req, res) {
+async function createSchedule(req, res, next) {
   const { classId, day, time, subject, faculty } = req.body;
+  if (
+    !day ||
+    typeof day !== "string" ||
+    !time ||
+    typeof time !== "string" ||
+    !subject ||
+    typeof subject !== "string" ||
+    !faculty ||
+    typeof faculty !== "string"
+  ) {
+    return next(Utils.Response.error("Type Error", 400));
+  }
   let schedule = await Models.Schedule.findOne({ class: classId });
   const students = await Models.User.find({
     class: classId,
@@ -35,8 +48,20 @@ async function createSchedule(req, res) {
   return res.json(Utils.Response.success(schedule));
 }
 
-async function updateSchedule(req, res) {
+async function updateSchedule(req, res, next) {
   const { day, scheduleId, scheduleClassId, time, subject, faculty } = req.body;
+  if (
+    !day ||
+    typeof day !== "string" ||
+    !time ||
+    typeof time !== "string" ||
+    !subject ||
+    typeof subject !== "string" ||
+    !faculty ||
+    typeof faculty !== "string"
+  ) {
+    return next(Utils.Response.error("Type Error", 400));
+  }
   const schedule = await Models.Schedule.findById(scheduleId);
   const students = await Models.User.find({
     class: schedule.class,
@@ -60,8 +85,13 @@ async function updateSchedule(req, res) {
   return res.json(Utils.Response.success(schedule));
 }
 
-async function deleteSchedule(req, res) {
+async function deleteSchedule(req, res, next) {
   const { scheduleId, scheduleClassId, day } = req.body;
+
+  if (!day || typeof day !== "string") {
+    return next(Utils.Response.error("Type Error", 400));
+  }
+
   const schedule = await Models.Schedule.findById(scheduleId);
 
   schedule.classes[day].forEach((cls) => {

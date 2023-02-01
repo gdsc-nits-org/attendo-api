@@ -1,11 +1,8 @@
 const Models = require("../models");
 const Utils = require("../utils");
 
-async function getAllUsersFromClass(req, res, next) {
+async function getAllUsersFromClass(req, res) {
   const { classId } = req.params;
-  if (!Utils.Mongoose.objectIdChecker(classId)) {
-    return next(Utils.Response.error("Invalid Class ID", 400));
-  }
 
   const users = await Models.User.find({ class: classId }).sort({
     scholarId: 1,
@@ -31,6 +28,14 @@ async function updateInfo(req, res) {
 
 async function fcmUpdate(req, res, next) {
   const { email, fcmToken } = req.body;
+  if (
+    !email ||
+    typeof email !== "string" ||
+    !fcmToken ||
+    typeof fcmToken !== "string"
+  ) {
+    return next(Utils.Response.error("Type Error", 400));
+  }
 
   const user = await Models.User.findOne({ email: email });
   if (!user) {
@@ -47,6 +52,9 @@ async function fcmUpdate(req, res, next) {
 
 async function getFcmToken(req, res, next) {
   const { email } = req.params;
+  if (!email || typeof email !== "string") {
+    return next(Utils.Response.error("Type Error", 400));
+  }
   const user = await Models.User.findOne({ email: email });
   if (!user) {
     return next(Utils.Response.error("No user found", 400));

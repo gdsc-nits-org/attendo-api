@@ -1,8 +1,25 @@
 const Models = require("../models");
 const Utils = require("../utils");
 
-async function createClass(req, res) {
+async function createClass(req, res, next) {
   const { name, email, scholarId, fcmToken, className, studentName } = req.body;
+
+  if (
+    !name ||
+    typeof name !== "string" ||
+    !email ||
+    typeof email !== "string" ||
+    !scholarId ||
+    typeof scholarId !== "string" ||
+    !fcmToken ||
+    typeof fcmToken !== "string" ||
+    !className ||
+    typeof className !== "string" ||
+    !studentName ||
+    typeof studentName !== "string"
+  ) {
+    return next(Utils.Response.error("Type Error", 400));
+  }
 
   const user = await Models.User.findOne({ email });
   const randomCode = Utils.Random.generateCode(6);
@@ -44,6 +61,20 @@ async function createClass(req, res) {
 
 async function joinClass(req, res, next) {
   const { name, fcmToken, scholarId, email, classCode } = req.body;
+  if (
+    !name ||
+    typeof name !== "string" ||
+    !email ||
+    typeof email !== "string" ||
+    !scholarId ||
+    typeof scholarId !== "string" ||
+    !fcmToken ||
+    typeof fcmToken !== "string" ||
+    !classCode ||
+    typeof classCode !== "string"
+  ) {
+    return next(Utils.Response.error("Type Error", 400));
+  }
 
   const cls = await Models.Class.findOne({ code: classCode });
   if (!cls) {
@@ -75,9 +106,6 @@ async function joinClass(req, res, next) {
 
 async function getClassInfo(req, res, next) {
   const { classId } = req.params;
-  if (!Utils.Mongoose.objectIdChecker(classId)) {
-    return next(Utils.Response.error("Invalid Class ID", 400));
-  }
 
   const cls = await Models.Class.findById(classId);
 
@@ -87,8 +115,12 @@ async function getClassInfo(req, res, next) {
   return res.json(Utils.Response.success(cls));
 }
 
-async function leaveClass(req, res) {
+async function leaveClass(req, res, next) {
   const { email } = req.params;
+
+  if (typeof email !== "string") {
+    return next(Utils.Response.error("Type Error", 400));
+  }
   await Models.User.findOneAndDelete({ email });
   return res.json(Utils.Response.success("Class left successfully"));
 }

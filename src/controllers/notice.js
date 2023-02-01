@@ -1,11 +1,8 @@
 const Models = require("../models");
 const Utils = require("../utils");
 
-async function getAllNotices(req, res, next) {
+async function getAllNotices(req, res) {
   const { classId } = req.params;
-  if (!Utils.Mongoose.objectIdChecker(classId)) {
-    return next(Utils.Response.error("Invalid Class ID", 400));
-  }
 
   const notices = await Models.Notice.find({ class: classId });
   return res.json(Utils.Response.success(notices));
@@ -13,13 +10,23 @@ async function getAllNotices(req, res, next) {
 
 async function getNotice(req, res) {
   const { noticeId } = req.params;
+
   const notice = await Models.Notice.findById(noticeId);
   return res.json(Utils.Response.success(notice));
 }
 
-async function addNotice(req, res) {
+async function addNotice(req, res, next) {
   const { classId } = req.params;
   const { title, body } = req.body;
+
+  if (
+    !title ||
+    typeof title !== "string" ||
+    !body ||
+    typeof body !== "string"
+  ) {
+    return next(Utils.Response.error("Type Error", 400));
+  }
 
   const newNotice = await Models.Notice.create({
     title: title,
@@ -39,11 +46,8 @@ async function addNotice(req, res) {
   return res.json(Utils.Response.success(newNotice));
 }
 
-async function editNotice(req, res, next) {
+async function editNotice(req, res) {
   const { noticeId } = req.params;
-  if (!Utils.Mongoose.objectIdChecker(noticeId)) {
-    return next(Utils.Response.error("Invalid Notice ID", 400));
-  }
 
   const notice = await Models.Notice.findById(noticeId);
 
@@ -71,14 +75,8 @@ async function editNotice(req, res, next) {
   return res.json(Utils.Response.success(updatedNotice));
 }
 
-async function deleteNotice(req, res, next) {
+async function deleteNotice(req, res) {
   const { noticeId, classId } = req.params;
-  if (!Utils.Mongoose.objectIdChecker(noticeId)) {
-    return next(Utils.Response.error("Invalid Notice ID", 400));
-  }
-  if (!Utils.Mongoose.objectIdChecker(classId)) {
-    return next(Utils.Response.error("Invalid Class ID", 400));
-  }
 
   await Models.Notice.findByIdAndDelete(noticeId);
   const notices = await Models.Notice.find({ class: classId });
