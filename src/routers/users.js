@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get(
   "/students/:classId",
-  Middlewares.Checker.idChecker("classId"),
+  Middlewares.IdChecker("classId"),
   Controllers.User.getAllUsersFromClass
 );
 router.put("/info/:email", Controllers.User.updateInfo);

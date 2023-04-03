@@ -1,19 +1,36 @@
 const Models = require("../models");
 const Utils = require("../utils");
+const Middlewares = require("../middlewares");
 
-async function getAllUsersFromClass(req, res) {
+const getAllUsersFromClass = Middlewares.CatchAsync(async (req, res, next) => {
   const { classId } = req.params;
 
   const users = await Models.User.find({ class: classId }).sort({
     scholarId: 1,
   });
-  return res.json(Utils.Response.success(users));
-}
 
-async function updateInfo(req, res) {
+  if (users.length === 0) {
+    return next(Utils.Response.error("No students found in the class !", 400));
+  }
+
+  return res.json(Utils.Response.success(users));
+});
+
+const updateInfo = Middlewares.CatchAsync(async (req, res, next) => {
   const { email } = req.params;
 
-  //! Too much trust in frontend to add req.body
+  const { name, newEmail, scholarId, isCr, fcmToken } = req.body;
+
+  if (
+    (name && typeof name !== "string") ||
+    (newEmail && typeof newEmail !== "string") ||
+    (scholarId && typeof scholarId !== "string") ||
+    (isCr && typeof isCr !== "boolean") ||
+    (fcmToken && typeof fcmToken !== "string")
+  ) {
+    return next(Utils.Response.error("Invalid field types !", 400));
+  }
+
   const student = await Models.User.findOneAndUpdate(
     { email: email },
     req.body,
@@ -22,11 +39,16 @@ async function updateInfo(req, res) {
       runValidators: true,
     }
   );
+  if (student === null) {
+    return next(
+      Utils.Response.error("No student found with the email id !", 400)
+    );
+  }
 
   return res.json(Utils.Response.success(student));
-}
+});
 
-async function fcmUpdate(req, res, next) {
+const fcmUpdate = Middlewares.CatchAsync(async (req, res, next) => {
   const { email, fcmToken } = req.body;
   if (
     !email ||
@@ -34,13 +56,16 @@ async function fcmUpdate(req, res, next) {
     !fcmToken ||
     typeof fcmToken !== "string"
   ) {
-    return next(Utils.Response.error("Type Error", 400));
+    return next(Utils.Response.error("Invalid field types !", 400));
   }
 
   const user = await Models.User.findOne({ email: email });
   if (!user) {
     return next(
-      Utils.Response.error("User has not yet joined or created any class", 400)
+      Utils.Response.error(
+        "User has not yet joined or created any class !",
+        400
+      )
     );
   }
 
@@ -48,19 +73,17 @@ async function fcmUpdate(req, res, next) {
   await user.save();
 
   return res.json(Utils.Response.success(user));
-}
+});
 
-async function getFcmToken(req, res, next) {
+const getFcmToken = Middlewares.CatchAsync(async (req, res, next) => {
   const { email } = req.params;
-  if (!email || typeof email !== "string") {
-    return next(Utils.Response.error("Type Error", 400));
-  }
+
   const user = await Models.User.findOne({ email: email });
   if (!user) {
-    return next(Utils.Response.error("No user found", 400));
+    return next(Utils.Response.error("No user found !", 400));
   }
 
   return res.json(Utils.Response.success(user.fcmToken));
-}
+});
 
 module.exports = { getAllUsersFromClass, updateInfo, fcmUpdate, getFcmToken };

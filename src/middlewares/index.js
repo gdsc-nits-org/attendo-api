@@ -1,4 +1,5 @@
 const Error = require("./error");
-const Checker = require("./idChecker");
+const IdChecker = require("./idChecker");
+const CatchAsync = require("./catchAsync");
 
-module.exports = { Error, Checker };
+module.exports = { Error, IdChecker, CatchAsync };

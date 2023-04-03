@@ -6,28 +6,28 @@ const router = express.Router();
 
 router.get(
   "/all/:classId",
-  Middlewares.Checker.idChecker("classId"),
+  Middlewares.IdChecker("classId"),
   Controllers.Notice.getAllNotices
 );
 router.get(
   "/:noticeId",
-  Middlewares.Checker.idChecker("noticeId"),
+  Middlewares.IdChecker("noticeId"),
   Controllers.Notice.getAllNotices
 );
 router.post(
   "/:classId",
-  Middlewares.Checker.idChecker("classId"),
+  Middlewares.IdChecker("classId"),
   Controllers.Notice.addNotice
 );
 router.put(
   "/:noticeId",
-  Middlewares.Checker.idChecker("noticeId"),
+  Middlewares.IdChecker("noticeId"),
   Controllers.Notice.editNotice
 );
 router.delete(
   "/:noticeId/:classId",
-  Middlewares.Checker.idChecker("noticeId"),
-  Middlewares.Checker.idChecker("classId"),
+  Middlewares.IdChecker("noticeId"),
+  Middlewares.IdChecker("classId"),
   Controllers.Notice.deleteNotice
 );
 
