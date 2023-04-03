@@ -1,7 +1,8 @@
 const Models = require("../models");
 const Utils = require("../utils");
+const Middlewares = require("../middlewares");
 
-async function createClass(req, res, next) {
+const createClass = Middlewares.CatchAsync(async (req, res, next) => {
   const { name, email, scholarId, fcmToken, className, studentName } = req.body;
 
   if (
@@ -18,7 +19,7 @@ async function createClass(req, res, next) {
     !studentName ||
     typeof studentName !== "string"
   ) {
-    return next(Utils.Response.error("Type Error", 400));
+    return next(Utils.Response.error("Invalid Field Types !", 400));
   }
 
   const user = await Models.User.findOne({ email });
@@ -57,9 +58,9 @@ async function createClass(req, res, next) {
     await user.save();
   }
   return res.json(Utils.Response.success(newClass));
-}
+});
 
-async function joinClass(req, res, next) {
+const joinClass = Middlewares.CatchAsync(async (req, res, next) => {
   const { name, fcmToken, scholarId, email, classCode } = req.body;
   if (
     !name ||
@@ -73,12 +74,12 @@ async function joinClass(req, res, next) {
     !classCode ||
     typeof classCode !== "string"
   ) {
-    return next(Utils.Response.error("Type Error", 400));
+    return next(Utils.Response.error("Invalid field types !", 400));
   }
 
   const cls = await Models.Class.findOne({ code: classCode });
   if (!cls) {
-    return next(Utils.Response.error("Wrong class code", 400));
+    return next(Utils.Response.error("Wrong class code !", 400));
   }
 
   const user = await Models.User.findOne({ email });
@@ -92,7 +93,7 @@ async function joinClass(req, res, next) {
     });
 
     return res.json(
-      Utils.Response.success("Successfully joined the class", 201)
+      Utils.Response.success("Successfully joined the class !", 201)
     );
   }
 
@@ -101,28 +102,31 @@ async function joinClass(req, res, next) {
   user.fcmToken = fcmToken;
   user.scholarId = scholarId;
   await user.save();
-  return res.json(Utils.Response.success("Successfully joined the class", 201));
-}
+  return res.json(
+    Utils.Response.success("Successfully joined the class.", 201)
+  );
+});
 
-async function getClassInfo(req, res, next) {
+const getClassInfo = Middlewares.CatchAsync(async (req, res, next) => {
   const { classId } = req.params;
 
   const cls = await Models.Class.findById(classId);
-
   if (!cls) {
-    return next(Utils.Response.error("Class not found", 400));
+    return next(Utils.Response.error("Class not found !", 400));
   }
-  return res.json(Utils.Response.success(cls));
-}
 
-async function leaveClass(req, res, next) {
+  return res.json(Utils.Response.success(cls));
+});
+
+const leaveClass = Middlewares.CatchAsync(async (req, res, next) => {
   const { email } = req.params;
 
-  if (typeof email !== "string") {
-    return next(Utils.Response.error("Type Error", 400));
+  const cls = await Models.User.findOneAndDelete({ email });
+  if (!cls) {
+    return next(Utils.Response.error("No such class exists !", 400));
   }
-  await Models.User.findOneAndDelete({ email });
-  return res.json(Utils.Response.success("Class left successfully"));
-}
+
+  return res.json(Utils.Response.success("Class left successfully."));
+});
 
 module.exports = { createClass, joinClass, getClassInfo, leaveClass };

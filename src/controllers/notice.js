@@ -1,21 +1,30 @@
 const Models = require("../models");
 const Utils = require("../utils");
+const Middlewares = require("../middlewares");
 
-async function getAllNotices(req, res) {
+const getAllNotices = Middlewares.CatchAsync(async (req, res, next) => {
   const { classId } = req.params;
 
   const notices = await Models.Notice.find({ class: classId });
-  return res.json(Utils.Response.success(notices));
-}
+  if (notices.length === 0) {
+    return next(Utils.Response.error("No notices found in the class !", 400));
+  }
 
-async function getNotice(req, res) {
+  return res.json(Utils.Response.success(notices));
+});
+
+const getNotice = Middlewares.CatchAsync(async (req, res, next) => {
   const { noticeId } = req.params;
 
   const notice = await Models.Notice.findById(noticeId);
-  return res.json(Utils.Response.success(notice));
-}
+  if (!notice) {
+    return next(Utils.Response.error("No notice found with the id !", 400));
+  }
 
-async function addNotice(req, res, next) {
+  return res.json(Utils.Response.success(notice));
+});
+
+const addNotice = Middlewares.CatchAsync(async (req, res, next) => {
   const { classId } = req.params;
   const { title, body } = req.body;
 
@@ -25,18 +34,28 @@ async function addNotice(req, res, next) {
     !body ||
     typeof body !== "string"
   ) {
-    return next(Utils.Response.error("Type Error", 400));
+    return next(Utils.Response.error("Invalid field types !", 400));
+  }
+
+  const cls = await Models.Class.findById(classId);
+  if (!cls) {
+    return next(Utils.Response.error("No class found with the id !", 400));
   }
 
   const newNotice = await Models.Notice.create({
-    title: title,
-    body: body,
-    class: classId,
+    title,
+    body,
+    class: cls._id,
   });
+
   const students = await Models.User.find({
-    class: classId,
+    class: cls._id,
     isCr: false,
   });
+
+  if (students.length === 0) {
+    return next(Utils.Response.error("No students found in the class !", 400));
+  }
 
   Utils.Notification.sendNotificationToStudents(
     students,
@@ -44,12 +63,24 @@ async function addNotice(req, res, next) {
   );
 
   return res.json(Utils.Response.success(newNotice));
-}
+});
 
-async function editNotice(req, res) {
+const editNotice = Middlewares.CatchAsync(async (req, res, next) => {
   const { noticeId } = req.params;
+  const { title, body } = req.body;
+
+  if (
+    (title && typeof title !== "string") ||
+    (body && typeof body !== "string")
+  ) {
+    return next(Utils.Response.error("Invalid field types !", 400));
+  }
 
   const notice = await Models.Notice.findById(noticeId);
+
+  if (!notice) {
+    return next(Utils.Response.error("No notice found with the id !", 400));
+  }
 
   const cls = notice.class;
   const students = await Models.User.find({
@@ -57,7 +88,10 @@ async function editNotice(req, res) {
     isCr: false,
   });
 
-  //! A bad move to give req.body directly
+  if (students.length === 0) {
+    return next(Utils.Response.error("No students found in the class !", 400));
+  }
+
   const updatedNotice = await Models.Notice.findByIdAndUpdate(
     noticeId,
     req.body,
@@ -73,15 +107,15 @@ async function editNotice(req, res) {
   );
 
   return res.json(Utils.Response.success(updatedNotice));
-}
+});
 
-async function deleteNotice(req, res) {
+const deleteNotice = Middlewares.CatchAsync(async (req, res) => {
   const { noticeId, classId } = req.params;
 
   await Models.Notice.findByIdAndDelete(noticeId);
   const notices = await Models.Notice.find({ class: classId });
   return res.json(Utils.Response.success(notices));
-}
+});
 
 module.exports = {
   getAllNotices,

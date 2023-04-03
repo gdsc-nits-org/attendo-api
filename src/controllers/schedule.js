@@ -1,20 +1,20 @@
 const Models = require("../models");
 const Utils = require("../utils");
+const Middlewares = require("../middlewares");
 
-async function getSchedule(req, res, next) {
+const getSchedule = Middlewares.CatchAsync(async (req, res, next) => {
   const { classId, day } = req.params;
-
-  if (!day || typeof day !== "string") {
-    return next(Utils.Response.error("Type Error", 400));
-  }
 
   const schedule = await Models.Schedule.findOne({
     class: classId,
   });
+  if (!schedule || schedule.classes[day].length === 0) {
+    return next(Utils.Response.error("No classes found for the day !", 400));
+  }
   return res.json(Utils.Response.success(schedule.classes[day]));
-}
+});
 
-async function createSchedule(req, res, next) {
+const createSchedule = Middlewares.CatchAsync(async (req, res, next) => {
   const { classId, day, time, subject, faculty } = req.body;
   if (
     !day ||
@@ -26,8 +26,9 @@ async function createSchedule(req, res, next) {
     !faculty ||
     typeof faculty !== "string"
   ) {
-    return next(Utils.Response.error("Type Error", 400));
+    return next(Utils.Response.error("Invalid field types !", 400));
   }
+
   let schedule = await Models.Schedule.findOne({ class: classId });
   const students = await Models.User.find({
     class: classId,
@@ -46,23 +47,24 @@ async function createSchedule(req, res, next) {
   await schedule.save();
 
   return res.json(Utils.Response.success(schedule));
-}
+});
 
-async function updateSchedule(req, res, next) {
+const updateSchedule = Middlewares.CatchAsync(async (req, res, next) => {
   const { day, scheduleId, scheduleClassId, time, subject, faculty } = req.body;
   if (
     !day ||
     typeof day !== "string" ||
-    !time ||
-    typeof time !== "string" ||
-    !subject ||
-    typeof subject !== "string" ||
-    !faculty ||
+    (time && typeof time !== "string") ||
+    (subject && typeof subject !== "string") ||
+    faculty ||
     typeof faculty !== "string"
   ) {
-    return next(Utils.Response.error("Type Error", 400));
+    return next(Utils.Response.error("Invalid field types !", 400));
   }
   const schedule = await Models.Schedule.findById(scheduleId);
+
+  if (!schedule) return next(Utils.Response.error("Schedule not found !", 404));
+
   const students = await Models.User.find({
     class: schedule.class,
     isCr: false,
@@ -83,16 +85,17 @@ async function updateSchedule(req, res, next) {
   );
 
   return res.json(Utils.Response.success(schedule));
-}
+});
 
-async function deleteSchedule(req, res, next) {
+const deleteSchedule = Middlewares.CatchAsync(async (req, res, next) => {
   const { scheduleId, scheduleClassId, day } = req.body;
 
   if (!day || typeof day !== "string") {
-    return next(Utils.Response.error("Type Error", 400));
+    return next(Utils.Response.error("Invalid field types !", 400));
   }
 
   const schedule = await Models.Schedule.findById(scheduleId);
+  if (!schedule) return next(Utils.Response.error("Schedule not found !", 400));
 
   schedule.classes[day].forEach((cls) => {
     if (cls._id !== scheduleClassId) return;
@@ -106,7 +109,7 @@ async function deleteSchedule(req, res, next) {
   await schedule.save();
 
   return res.json(Utils.Response.success(schedule));
-}
+});
 
 module.exports = {
   getSchedule,

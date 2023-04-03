@@ -9,4 +9,4 @@ function idChecker(id, type = "params") {
   };
 }
 
-module.exports = { idChecker };
+module.exports = idChecker;
